@@ -1,3 +1,4 @@
+<%--@elvariable id="operation" type="com.userlogin.model.Operation"--%>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
          pageEncoding="ISO-8859-1"%>
 <!DOCTYPE html>
@@ -8,7 +9,7 @@
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-User Added Successfully!!<br><br>
+User ${operation.name} Successfully!!<br><br>
 <a href="${pageContext.request.contextPath}/listUsers">Click here</a> to see existing Users
 </body>
 </html>
