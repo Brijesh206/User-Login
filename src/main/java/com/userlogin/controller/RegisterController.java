@@ -1,10 +1,11 @@
 package com.userlogin.controller;
 
+import com.userlogin.model.Operation;
 import com.userlogin.model.User;
-import com.userlogin.repository.UserRepository;
 import com.userlogin.service.RegisterService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -21,6 +22,8 @@ public class RegisterController {
 
     @Autowired
     private RegisterService registerService;
+    @Autowired
+    private Operation operations;
 
     private ModelAndView modelAndView;
 
@@ -40,33 +43,6 @@ public class RegisterController {
         return "register";
     }
 
-//    Add User to the DataBase
-    @RequestMapping(value = "/register", method = RequestMethod.POST)
-    public String registration(@Valid @ModelAttribute("registerUser") User user,
-                             BindingResult result,
-                             Model model){
-        User existingUser = registerService.findUserByEmail(user.getEmail());
-
-        if(existingUser != null && existingUser.getEmail() != null){
-            result.rejectValue("email", "403",
-                    "There is already an account register with this email");
-        }
-
-        if(result.hasErrors()){
-            model.addAttribute("registerUser", user);
-            return "/userExist";
-        }
-
-        registerService.addUser(user);
-        return "redirect:/register?success";
-    }
-
-//    show the success page to the user
-    @RequestMapping(value = "/register", method = RequestMethod.GET, params = "success")
-    public String registrationSuccess(){
-        return "success";
-    }
-
 //    user is already exist in DB
     @RequestMapping(value = "/userExist", method = RequestMethod.GET)
     public String userExist(){
@@ -76,7 +52,7 @@ public class RegisterController {
 //    List the existing users
     @RequestMapping(value = "/listUsers", method = RequestMethod.GET)
     public ModelAndView getUsers(){
-        ModelAndView modelAndView = new ModelAndView("listUsers");
+        modelAndView = new ModelAndView("listUsers");
         List<User> users = registerService.getUsers();
         modelAndView.addObject("listUsers", users);
         return modelAndView;
@@ -91,19 +67,54 @@ public class RegisterController {
 //    Show the update page with the user details
     @RequestMapping(value = "/updateForm/{userId}", method = RequestMethod.GET)
     public ModelAndView showUpdateForm(@PathVariable("userId") int userId){
-        ModelAndView modelAndView = new ModelAndView("updateUser");
+        modelAndView = new ModelAndView("updateUser");
         Optional<User> user = registerService.getUserWithId(userId);
         modelAndView.addObject("updateUser", user.orElse(new User()));
         return modelAndView;
     }
 
-//    Update User
-    @RequestMapping(value = "/update/{userId}", method = RequestMethod.POST)
-    public ModelAndView updateUser(@PathVariable("userId") int userID, @ModelAttribute("updateUser") User user){
-        ModelAndView modelAndView = new ModelAndView("updateSuccess");
-        registerService.updateUser(userID, user);
+//    User Registration and Update
+    @RequestMapping(value = {"/{operation}/{userId}", "/{operation}"}, method = RequestMethod.POST)
+    public ModelAndView operations(@PathVariable("operation") String operation,
+                                   @Nullable @PathVariable("userId") Integer userId,
+                                   @Valid @ModelAttribute("registerUser") User registerUser,
+                                   @ModelAttribute("updateUser") User updateUser,
+                                   BindingResult result){
+
+        modelAndView = new ModelAndView("success");
+
+        switch (operation.toLowerCase()){
+            case "register" -> {
+                User existingUser = registerService.findUserByEmail(registerUser.getEmail());
+
+                if(existingUser != null && existingUser.getEmail() != null){
+                    result.rejectValue("email", "403",
+                            "There is already an account register with this email");
+                }
+
+                if(result.hasErrors()){
+                    modelAndView = new ModelAndView("error");
+                    modelAndView.addObject("registerUser", registerUser);
+                    return modelAndView;
+                }
+
+                registerService.addUser(registerUser);
+                operations.setName("registered");
+                modelAndView.addObject("operation", operations);
+                return modelAndView;
+            }
+
+            case "update" -> {
+                registerService.updateUser(userId, updateUser);
+                operations.setName("updated");
+                modelAndView.addObject("operation", operations);
+            }
+
+            default ->{
+                return new ModelAndView("redirect: /error");
+            }
+        }
         return modelAndView;
     }
-
 }
 
