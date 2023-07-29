@@ -9,5 +9,7 @@
 </head>
 <body>
 Something Went Wrong!!
+<br><br>
+Return to <a href="${pageContext.request.contextPath}/home">Home</a>
 </body>
 </html>
