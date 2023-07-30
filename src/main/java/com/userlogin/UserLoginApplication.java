@@ -11,11 +11,6 @@ import org.springframework.context.annotation.Bean;
 public class UserLoginApplication {
 
     @Bean
-    public RegisterService registerService(){
-        return new RegisterService();
-    }
-
-    @Bean
     public UserDao userDao(){
         return new UserDao();
     }
